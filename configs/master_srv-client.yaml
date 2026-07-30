@@ -1,0 +1,18 @@
+# ros2 service call → main_srv_client (Zenoh get). Override file: MASTER_SRV_CLIENT_YAML.
+# Env: MAIN_SRV_ROUTER, MAIN_SRV_ZENOH_JSON5, MAIN_SRV_KEYEXPR, MAIN_SRV_TIMEOUT_MS, MAIN_SRV_SEQ,
+# MAIN_SRV_CLIENT_ID, MAIN_SRV_A / MAIN_SRV_B (merged into args for AddTwoInts).
+
+ros2_service_call:
+  service_name: /add_two_ints
+  service_type: example_interfaces/srv/AddTwoInts
+  args:
+    a: 7
+    b: 8
+  
+
+srv_client:
+  zenoh_json5: zenoh_agent-as-client.json5
+  router: tcp/127.0.0.1:7447
+  timeout_ms: 10000
+  seq: 1
+  client_id: "0xd055e7276e40301"

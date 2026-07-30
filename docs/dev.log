@@ -1,0 +1,38 @@
+# Developer / ops log (concise issue record)
+
+Pitfalls and integration notes from bringing this repo up — not user-facing tutorial text.
+
+---
+
+## Zenoh / router
+
+- Multicast discovery toward **`zenohd`** is **best-effort** (firewall, VPN, Wi‑Fi isolation). Fix: **`connect.endpoints`** in JSON5 (e.g. **`tcp/127.0.0.1:7447`** or LAN IP of the Compose host).
+- Remote edge → Compose on laptop: uncomment **`connect`** in **`zenoh_agent-as-peer.json5`** pointing at **`tcp/<docker-host-LAN-ip>:7447`**; loopback Compose host may use **`tcp/127.0.0.1:7447`** instead.
+- If LAN multicast fails for one side, add matching **`connect`** on the agent JSON5 so all processes use the intended router.
+
+## Bridge process count
+
+- **Never** run two **`zenoh-bridge-ros2dds`** on the **same OS** for the same ROS role → duplicate DDS/Zenoh registration, flaky **`listener`**, confusing logs.**`pgrep -af zenoh-bridge-ros2dds`** should show **one** line per host workflow (container = separate host).
+- **`bridge.skip_spawn: true`** when that machine only needs plain **`ros2`** over DDS (no WAN offload).
+
+## WAN / topology (`wan_client`)
+
+- **`zenoh.topology: wan_client`** (or **`ZENOH_AGENT_TOPOLOGY=wan_client`**) + **`bridge.mode: local_peer`** **with spawn** is invalid: WAN client session does **not** listen on **:7411** — **`cargo run --bin zenoh_agent`** should **error early** on that combo.
+- Typical WAN subscriber-only: **`bridge.skip_spawn: true`**, or **`bridge.mode: client`** if this host also publishes into **`zenohd`**.
+
+## `main_sub` / `sub_cli`
+
+- **`(peer watch)`** on **:7411** only when **`bridge.mode`** is **`local_peer`** **and** **`bridge.skip_spawn`** is **`false`** (avoids noise on machines that never run the bridge child).
+- **`subscriber.discover: true`**: **`(discover) alive` / `stale`** is **heuristic** (**`MAIN_SUB_TOPIC_STALE_SEC`**, **`0`** disables stale); **`[info]`** still prints every sample.
+- Library **`ZENOH_AGENT_TOPOLOGY`** only reshapes YAML when there is **no** **`zenoh`** block; **`main_sub`** / **`main_pub`** session file is **`MAIN_*_ZENOH_JSON5`**.
+
+## ROS 2 / DDS env
+
+- Bridge subprocess: **`ROS_LOCALHOST_ONLY`** cleared so DDS policy follows JSON (**`LOCALHOST`** scope in repo configs); manual runs may need **`unset ROS_LOCALHOST_ONLY`** if the shell leaves it set.
+- **`ROS_AUTOMATIC_DISCOVERY_RANGE`**: bridge may **WARN** before **ROS 2 Iron**; DDS reachability still follows RMW / Cyclone settings (see **`zenoh_bridge-as-srv-server-client.json5`** header).
+- Host **`ros2`** nodes: **`ROS_DOMAIN_ID`**, **`RMW_IMPLEMENTATION`**, etc. come from **your** shell; agent can log a trim via **`bridge.log_host_dds_env`**.
+
+## Services / `main_srv_client`
+
+- Rust side is **Zenoh caller only** ( **`get`** + CDR + **`rqh`** attachment); hosting ROS services from this crate is out of scope.
+- **`zenoh_bridge-as-srv-server-client.json5`**: **`service_servers: ["/.*"]`** discovers every service (easy for teams; also bridges **`rcl_interfaces`** → noisier routes / broader Zenoh surface). Tighten (e.g. **`["/add_two_ints"]`**) when needed.

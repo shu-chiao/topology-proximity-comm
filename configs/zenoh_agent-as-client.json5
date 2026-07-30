@@ -1,0 +1,17 @@
+// Template for `wan_client` / `main_sub`: pure Zenoh client (no :7411 listen).
+// Dial zenohd explicitly: `MAIN_SUB_ROUTER=tcp/<host>:7447` (same machine: `tcp/127.0.0.1:7447`).
+{
+  mode: "client",
+
+  open: {
+    return_conditions: {
+      connect_scouted: false,
+    },
+  },
+
+  scouting: {
+    multicast: {
+      enabled: true,
+    },
+  },
+}

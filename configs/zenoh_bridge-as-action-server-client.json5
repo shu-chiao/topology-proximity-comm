@@ -1,0 +1,34 @@
+// Client: find zenohd on the LAN via multicast, or set ZENOH_BRIDGE_ROUTER=tcp/<host>:7447 (TCP only).
+//
+// action_servers: bridge turtlesim /turtle1/rotate_absolute (turtlesim/action/RotateAbsolute) to Zenoh.
+// Tighten or widen the regex if you add more action servers.
+
+{
+  mode: "client",
+
+  open: {
+    return_conditions: {
+      connect_scouted: true,
+    },
+  },
+
+  scouting: {
+    multicast: {
+      enabled: true,
+    },
+  },
+
+  plugins: {
+    ros2dds: {
+      ros_automatic_discovery_range: "LOCALHOST",
+      allow: {
+        publishers: [],
+        subscribers: [],
+        service_servers: [],
+        service_clients: [],
+        action_servers: ["/turtle1/rotate_absolute"],
+        action_clients: [],
+      },
+    },
+  },
+}

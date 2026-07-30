@@ -1,0 +1,36 @@
+// Client: find zenohd on the LAN via multicast, or set ZENOH_BRIDGE_ROUTER=tcp/<host>:7447 (TCP only, same idea as MAIN_*_ROUTER).
+//
+// service_servers ["/.*"] bridges every discovered ROS service (easy for new servers; also pulls rcl_interfaces — noisier logs / wider surface).
+// Tighten to e.g. ["/add_two_ints"] if you want less noise.
+//
+// ros_automatic_discovery_range: pre-Iron ROS may WARN; DDS still follows your RMW localhost settings.
+
+{
+  mode: "client",
+
+  open: {
+    return_conditions: {
+      connect_scouted: true,
+    },
+  },
+
+  scouting: {
+    multicast: {
+      enabled: true,
+    },
+  },
+
+  plugins: {
+    ros2dds: {
+      ros_automatic_discovery_range: "LOCALHOST",
+      allow: {
+        publishers: [],
+        subscribers: [],
+        service_servers: ["/.*"],
+        service_clients: [],
+        action_servers: [],
+        action_clients: [],
+      },
+    },
+  },
+}

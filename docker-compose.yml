@@ -1,0 +1,31 @@
+# Simulates **cloud zenohd** (`eclipse/zenoh`).
+#
+# `network_mode: host` (Linux): **zenohd** uses your PC's real NIC. **UDP multicast scouting** can reach other
+# machines on the same LAN (e.g. Jetson) so **`configs/zenoh_agent-as-peer.json5`** stays **without** a fixed **`connect`** line.
+#
+# Not supported the same way on **Docker Desktop (macOS/Windows)** — use a Linux host or run **zenohd** natively.
+#
+# Bring up / stop:
+#   docker compose up -d
+#   docker compose down
+#
+# Same-LAN tips:
+#   • Host firewall: allow **zenohd** TCP (default **7447**) and **UDP scouting** (see Zenoh defaults / logs if discovery fails).
+#   • Wi-Fi **AP/client isolation** blocks device-to-device discovery — use Ethernet or fix AP settings.
+#
+# Port mapping is **not** used here (`host` mode); **7447** is whatever **zenohd** binds on the host stack.
+#
+# Ref: https://zenoh.io/docs/getting-started/quick-test/
+services:
+  zenoh:
+    image: eclipse/zenoh:1.9.0
+    init: true
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - zenoh_router_home:/root/.zenoh
+    environment:
+      RUST_LOG: ${RUST_LOG:-info}
+
+volumes:
+  zenoh_router_home:
