@@ -1,4 +1,4 @@
-# topology-proximity-comm
+# Description 
 
 Zenoh sessions, ROS 2 ↔ Zenoh bridge, and wire-format helpers for edge topology / proximity communication.
 
