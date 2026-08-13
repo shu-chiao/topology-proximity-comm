@@ -1,0 +1,12 @@
+# Subscriber-only YAML for **`cargo run --bin main_sub`**.
+#
+# Relative paths resolved from **`{repo}/configs/`** when using basename-only **`EDGE_AGENT_SUB_YAML`**.
+#
+# Zenoh transport JSON5 is **not** chosen here — use **`MAIN_SUB_ZENOH_JSON5`** or default **`zenoh_agent-as-client.json5`**.
+# **`MAIN_SUB_ROUTER=tcp/<host>:7447`** attaches to **`zenohd`** when not on loopback.
+# **`MAIN_SUB_TOPIC_STALE_SEC`** (env, default 30): mark keys stale after no payload (`0` = off).
+
+subscriber:
+  discover: true
+  # **`**`** suits bridge demos (Zenoh key **`chatter`**).
+  keyexpr: "demo/chatter"

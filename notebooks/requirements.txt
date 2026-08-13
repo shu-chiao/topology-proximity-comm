@@ -1,0 +1,2 @@
+# Optional — only needed to run notebooks locally
+ipykernel>=6.29

@@ -1,0 +1,14 @@
+// rmw_zenoh client config — dial local zenohd (infra/docker-compose.yml).
+{
+  mode: "client",
+
+  scouting: {
+    multicast: {
+      enabled: false,
+    },
+  },
+
+  connect: {
+    endpoints: ["tcp/127.0.0.1:7447"],
+  },
+}

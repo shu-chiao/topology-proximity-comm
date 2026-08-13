@@ -1,0 +1,50 @@
+# Sample 1 — Traditional DDS in ROS 2 Jazzy container.
+#
+# Quick demo (talker + listener, ~6 s):
+#   docker compose -f samples/01-traditional-dds/docker-compose.yml run --rm demo
+#
+# Manual two-terminal style (Linux host network):
+#   docker compose -f samples/01-traditional-dds/docker-compose.yml run --rm listener
+#   docker compose -f samples/01-traditional-dds/docker-compose.yml run --rm talker
+#
+name: sample01-traditional-dds
+
+services:
+  demo:
+    build: .
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      DEMO_DURATION_SEC: ${DEMO_DURATION_SEC:-6}
+
+  talker:
+    build: .
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+    profiles: [manual]
+    command:
+      - bash
+      - -lc
+      - |
+        set +u
+        source /opt/ros/jazzy/setup.bash
+        source /ws/cpp/install/setup.bash
+        set -u
+        exec ros2 run demo_nodes talker
+
+  listener:
+    build: .
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+    profiles: [manual]
+    command:
+      - bash
+      - -lc
+      - |
+        set +u
+        source /opt/ros/jazzy/setup.bash
+        source /ws/cpp/install/setup.bash
+        set -u
+        exec ros2 run demo_nodes listener

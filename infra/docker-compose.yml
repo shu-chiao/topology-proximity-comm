@@ -1,0 +1,29 @@
+# Shared **zenohd** router for samples 02 (rmw_zenoh) and 03 (DDS + bridge).
+#
+# `network_mode: host` (Linux): zenohd uses the host NIC. UDP multicast scouting can reach
+# other machines on the same LAN.
+#
+# Not supported the same way on Docker Desktop (macOS/Windows) — use a Linux host or run zenohd natively.
+#
+# Bring up / stop (from repo root):
+#   docker compose -f infra/docker-compose.yml up -d
+#   docker compose -f infra/docker-compose.yml down
+#
+# Same-LAN tips:
+#   • Host firewall: allow zenohd TCP (default 7447) and UDP scouting.
+#   • Wi-Fi AP/client isolation blocks device-to-device discovery — use Ethernet or fix AP settings.
+#
+# Ref: https://zenoh.io/docs/getting-started/quick-test/
+services:
+  zenoh:
+    image: eclipse/zenoh:1.9.0
+    init: true
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - zenoh_router_home:/root/.zenoh
+    environment:
+      RUST_LOG: ${RUST_LOG:-info}
+
+volumes:
+  zenoh_router_home:
