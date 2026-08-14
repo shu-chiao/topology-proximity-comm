@@ -50,3 +50,7 @@ archived/               # superseded monolith (reference only)
 ## See also
 
 - [`notebooks/quick_run_samples.ipynb`](notebooks/quick_run_samples.ipynb) — build & run all three samples from Jupyter
+
+## License
+
+Apache-2.0 — see [LICENSE](LICENSE).
