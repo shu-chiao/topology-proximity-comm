@@ -1,9 +1,46 @@
 # Sample 3 — DDS + Zenoh Bridge
 
-Hybrid setup: ROS 2 nodes stay on **local DDS**, while `zenoh-bridge-ros2dds` forwards traffic through **Zenoh** for remote subscribers (Rust) or other bridged hosts.
+Hybrid setup: ROS 2 nodes stay on **local DDS**, while `zenoh-bridge-ros2dds` forwards traffic through **Zenoh** for remote Rust pub/sub in a separate container.
 
-```text
-C++ talker (DDS)  →  zenoh-bridge-ros2dds  →  zenohd  →  Rust main_sub
+## Tech stack & structure
+
+```mermaid
+flowchart LR
+  subgraph ROS2["ros2 container"]
+    direction TB
+    TL["talker / listener"]
+    B["bridge (client)"]
+    Z["zenohd (router)"]
+    TL --- B
+    B --> Z
+  end
+
+  subgraph RUST["rust container"]
+    direction TB
+    RS["main_sub"]
+    RP["main_pub"]
+    LBL["(clients only)"]
+    RS --- LBL
+    RP --- LBL
+  end
+
+  Z <--> RS
+  Z <--> RP
+```
+
+**1 router + 3 client sessions:**
+
+```mermaid
+flowchart TB
+  Z["zenohd<br/>(router :7447)"]
+
+  B["zenoh-bridge-ros2dds<br/>(client)"]
+  S["main_sub<br/>(client)"]
+  P["main_pub<br/>(client)"]
+
+  B --> Z
+  S --> Z
+  P --> Z
 ```
 
 ## Demo contract
@@ -13,90 +50,48 @@ C++ talker (DDS)  →  zenoh-bridge-ros2dds  →  zenohd  →  Rust main_sub
 | ROS topic | `/demo/chatter` |
 | Type | `std_msgs/msg/String` |
 | Zenoh key | `demo/chatter` (bridge mapping) |
+| ROS leg | C++ talker + listener (DDS) |
+| Rust leg | `main_pub` + `main_sub` |
 
 ## Prerequisites
 
-- ROS 2 **Jazzy**, Rust toolchain, `zenoh-bridge-ros2dds` **1.9.x**
-- See [docs/prerequisites.md](../../docs/prerequisites.md)
+- **Docker** with Compose v2 — see [docs/prerequisites.md](../../docs/prerequisites.md)
+- Linux recommended (`network_mode: host`)
 
-Start the shared router from repo root:
+Two containers: **ros2** (zenohd + bridge + talker/listener) and **rust** (`main_sub` + `main_pub`).
 
-```bash
-docker compose -f infra/docker-compose.yml up -d
-```
+## Build and run
 
-## Build
-
-### C++ ROS nodes (local DDS side)
+From repo root:
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-cd samples/03-dds-zenoh-bridge/cpp
-colcon build
-source install/setup.bash
+docker compose -f samples/03-dds-zenoh-bridge/docker-compose.yml up --build --abort-on-container-exit
 ```
 
-### Rust Zenoh clients
+Bounded demo (~8 s). You should see:
 
-```bash
-cd samples/03-dds-zenoh-bridge/rust
-cargo build
+- ROS talker `Publishing: 'Hello N'` and Rust sub samples on `demo/chatter`
+- Rust pub `(pub) put …` and ROS listener `I heard: 'Hello from Rust'`
+
+## From the notebook
+
+```python
+from demo_runner import build_sample3_docker, run_sample3_docker_demo
+
+build_sample3_docker()
+print(run_sample3_docker_demo(duration_sec=8))
 ```
-
-## Run — pub/sub demo (manual)
-
-**Terminal 1 — bridge** (ROS publish → Zenoh):
-
-```bash
-zenoh-bridge-ros2dds --no-multicast-scouting \
-  -c samples/03-dds-zenoh-bridge/configs/zenoh_bridge-as-pub-client.json5
-```
-
-**Terminal 2 — C++ talker** (local DDS):
-
-```bash
-source /opt/ros/jazzy/setup.bash
-source samples/03-dds-zenoh-bridge/cpp/install/setup.bash
-ros2 run demo_nodes talker
-```
-
-**Terminal 3 — Rust subscriber** (remote Zenoh leg):
-
-```bash
-cd samples/03-dds-zenoh-bridge/rust
-MAIN_SUB_ROUTER=tcp/127.0.0.1:7447 cargo run --bin main_sub
-```
-
-You should see sample lines for `demo/chatter` with `Hello N` payloads.
-
-## Run — helper script
-
-Publisher side (bridge + talker in one script):
-
-```bash
-./samples/03-dds-zenoh-bridge/scripts/run-local-bridge-and-pub-talker.sh
-```
-
-Subscriber side (bridge + C++ listener on the ROS leg):
-
-```bash
-./samples/03-dds-zenoh-bridge/scripts/run-local-bridge-and-sub-listener.sh
-```
-
-For a full cross-stack test: run the pub script in one terminal and `MAIN_SUB_ROUTER=tcp/127.0.0.1:7447 cargo run --bin main_sub` in another.
 
 ## Layout
 
 ```text
-cpp/demo_nodes/     ROS talker + listener (local DDS)
-rust/               Zenoh pub/sub/service/action clients
+cpp/demo_nodes/     ROS talker + listener (built into ros2 image)
+rust/               Zenoh pub/sub clients (built into rust image)
 configs/            bridge JSON5 + agent YAML
-scripts/            local bridge demo helpers
+docker/ros2/        ros2 container Dockerfile + run script
+docker/rust/        rust container Dockerfile + run script
+scripts/            advanced host scripts (reference only)
 ```
-
-## Advanced (secondary demos)
-
-The Rust crate also includes service and action clients (`main_srv_client`, `main_action_client`) and matching bridge configs. These target upstream ROS demos (e.g. `/add_two_ints`, turtlesim actions) — see `configs/master_*.yaml` and `scripts/run-local-bridge-and-*-server.sh`.
 
 ## Differences vs other samples
 
@@ -105,6 +100,7 @@ The Rust crate also includes service and action clients (`main_srv_client`, `mai
 | ROS middleware | DDS | rmw_zenoh | DDS (local) |
 | Zenoh role | none | RMW | bridge + remote clients |
 | Mixed stacks | no | no | yes |
+| Docker | 1 container | 1 container | **2 containers** |
 
 ## See also
 

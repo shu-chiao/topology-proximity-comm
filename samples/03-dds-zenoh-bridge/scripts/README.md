@@ -1,18 +1,12 @@
-# scripts/ — local bridge demos
+# scripts/ — advanced reference (host only)
 
-Helper scripts for Sample 3. Each starts `zenoh-bridge-ros2dds` in the background, then runs a ROS node.
+These shell scripts predate the Docker demo. **Use [../README.md](../README.md) Docker instructions for the main sample 3 walkthrough.**
+
+They require a host ROS Jazzy install, `zenoh-bridge-ros2dds`, and a built `cpp/` workspace — not used by the notebook or `docker compose` flow.
 
 | Script | Bridge config | ROS node |
 |--------|---------------|----------|
 | `run-local-bridge-and-pub-talker.sh` | `zenoh_bridge-as-pub-client.json5` | `demo_nodes talker` |
 | `run-local-bridge-and-sub-listener.sh` | `zenoh_bridge-as-sub-client.json5` | `demo_nodes listener` |
-| `run-local-bridge-and-srv-server.sh` | `zenoh_bridge-as-srv-server-client.json5` | upstream `demo_nodes_cpp` (advanced) |
+| `run-local-bridge-and-srv-server.sh` | `zenoh_bridge-as-srv-server-client.json5` | upstream service demo (advanced) |
 | `run-local-bridge-and-action-server.sh` | action bridge config | turtlesim action (advanced) |
-
-Build C++ nodes first:
-
-```bash
-cd samples/03-dds-zenoh-bridge/cpp && colcon build
-```
-
-Override bridge config: `ZENOH_BRIDGE_CONFIG=/path/to.json5 ./scripts/run-local-bridge-and-pub-talker.sh`

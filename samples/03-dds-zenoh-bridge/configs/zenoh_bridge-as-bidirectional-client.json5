@@ -1,0 +1,30 @@
+// Bidirectional bridge: ROS publishers → Zenoh and Zenoh → ROS subscribers.
+// Used by the Sample 3 Docker ros2 container (talker + listener + bridge).
+
+{
+  mode: "client",
+
+  scouting: {
+    multicast: {
+      enabled: false,
+    },
+  },
+
+  connect: {
+    endpoints: ["tcp/127.0.0.1:7447"],
+  },
+
+  plugins: {
+    ros2dds: {
+      ros_automatic_discovery_range: "LOCALHOST",
+      allow: {
+        publishers: ["/.*"],
+        subscribers: ["/.*"],
+        service_servers: [],
+        service_clients: [],
+        action_servers: [],
+        action_clients: [],
+      },
+    },
+  },
+}
