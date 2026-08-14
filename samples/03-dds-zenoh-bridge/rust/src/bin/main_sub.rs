@@ -2,7 +2,6 @@
 //!
 //! Config: `configs/edge_agent-sub.yaml` or `EDGE_AGENT_SUB_YAML`.
 //! Router override: `MAIN_SUB_ROUTER=tcp/host:7447`.
-//! Discover: set `subscriber.discover: true` in YAML.
 //! Stale timeout: `MAIN_SUB_TOPIC_STALE_SEC` (default 30, 0 disables).
 
 use std::path::{Path, PathBuf};
@@ -51,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
         );
     }
 
-    let topic_stale_after = if sub.discover {
+    let topic_stale_after = {
         let sec: u64 = std::env::var("MAIN_SUB_TOPIC_STALE_SEC")
             .ok()
             .and_then(|s| s.parse().ok())
@@ -61,15 +60,12 @@ async fn main() -> anyhow::Result<()> {
         } else {
             Some(Duration::from_secs(sec))
         }
-    } else {
-        None
     };
 
     println!(
-        "(main_sub) edge `{}` zenoh `{}` discover={} keyexpr=`{}` stale_after={:?}",
+        "(main_sub) edge `{}` zenoh `{}` keyexpr=`{}` stale_after={:?}",
         edge_yaml.display(),
         zenoh_cfg.display(),
-        sub.discover,
         sub.keyexpr,
         topic_stale_after,
     );

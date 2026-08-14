@@ -75,7 +75,7 @@ async fn main() -> anyhow::Result<()> {
     if let Ok(s) = std::env::var("ROS_MSG_TYPE") {
         let t = s.trim();
         if !t.is_empty() {
-            args.ros_msg_type = Some(t.to_string());
+            args.ros_msg_type = t.to_string();
         }
     }
 

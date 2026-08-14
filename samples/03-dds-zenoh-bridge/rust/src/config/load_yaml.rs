@@ -8,7 +8,6 @@ use std::path::{Path, PathBuf};
 /// Subscriber settings from `edge_agent-sub.yaml`.
 #[derive(Debug, Clone)]
 pub struct ResolvedSubConfig {
-    pub discover: bool,
     pub keyexpr: String,
 }
 
@@ -20,8 +19,6 @@ struct SubYamlRoot {
 
 #[derive(Debug, Deserialize, Default)]
 struct SubscriberSection {
-    #[serde(default)]
-    discover: bool,
     #[serde(default = "default_keyexpr")]
     keyexpr: String,
 }
@@ -58,7 +55,6 @@ impl ResolvedSubConfig {
         let parsed: SubYamlRoot = serde_yaml::from_str(&raw)
             .map_err(|e| anyhow::anyhow!("parse subscriber YAML {}: {e}", yaml_path.display()))?;
         Ok(Self {
-            discover: parsed.subscriber.discover,
             keyexpr: parsed.subscriber.keyexpr,
         })
     }

@@ -24,8 +24,6 @@ pub enum WaitPolicy {
 
 pub struct SubscribersArgs {
     pub config_path: PathBuf,
-    /// Print discover lines for new and stale topics.
-    pub discover: bool,
     pub keyexpr: String,
     pub wait: WaitPolicy,
     /// Zenoh router address override (e.g. `tcp/host:7447`).
@@ -37,7 +35,6 @@ pub struct SubscribersArgs {
 pub fn subscriber_args(sub: &ResolvedSubConfig, wait: WaitPolicy) -> SubscribersArgs {
     SubscribersArgs {
         config_path: std::path::PathBuf::new(),
-        discover: sub.discover,
         keyexpr: sub.keyexpr.clone(),
         wait,
         router_connect_override: None,
@@ -59,16 +56,9 @@ fn sample_time_or_recv_ms(sample: &zenoh::sample::Sample) -> String {
 
 fn format_decoded_payload(sample: &zenoh::sample::Sample) -> Option<String> {
     let bytes = sample.payload().to_bytes();
-    if let Ok(text) = ros_msg_cdr::ros2_std_msgs_string_cdr_decode(&bytes) {
-        return Some(format!("data='{text}'"));
-    }
-    if let Ok(text) = std::str::from_utf8(&bytes) {
-        let t = text.trim_end_matches('\0').trim();
-        if !t.is_empty() && t.is_ascii() {
-            return Some(format!("text='{t}'"));
-        }
-    }
-    None
+    ros_msg_cdr::ros2_std_msgs_string_cdr_decode(&bytes)
+        .ok()
+        .map(|text| format!("data='{text}'"))
 }
 
 fn print_sample_line(sample: &zenoh::sample::Sample) {
@@ -131,7 +121,7 @@ async fn stale_topic_watchdog(alive: Arc<Mutex<HashMap<String, Instant>>>, stale
     }
 }
 
-async fn subscribe_parallel_discover_and_samples(
+async fn subscribe_discover_and_samples(
     session: &zenoh::Session,
     ke: &str,
     topic_stale_after: Option<Duration>,
@@ -192,34 +182,9 @@ async fn subscribe_parallel_discover_and_samples(
     Ok(())
 }
 
-async fn subscribe_on_session(
-    session: &zenoh::Session,
-    discover: bool,
-    ke: &str,
-    topic_stale_after: Option<Duration>,
-) -> anyhow::Result<()> {
-    if discover {
-        return subscribe_parallel_discover_and_samples(session, ke, topic_stale_after).await;
-    }
-
-    session
-        .declare_subscriber(ke)
-        .callback(move |sample| {
-            print_sample_line(&sample);
-        })
-        .background()
-        .await
-        .map_err(|e| anyhow::anyhow!("declare_subscriber: {e}"))?;
-    println!("(Sub) `{ke}` — waiting…");
-    tokio::signal::ctrl_c().await?;
-
-    Ok(())
-}
-
 pub async fn run(args: SubscribersArgs) -> anyhow::Result<()> {
     let SubscribersArgs {
         config_path,
-        discover,
         keyexpr,
         wait,
         router_connect_override,
@@ -248,14 +213,13 @@ pub async fn run(args: SubscribersArgs) -> anyhow::Result<()> {
     log_zenoh_attachment(&session);
 
     println!(
-        "(sub) ZID {} `{}` {} {:?}",
+        "(sub) ZID {} `{}` discover+info {:?}",
         session.zid(),
         ke,
-        if discover { "discover+info" } else { "samples" },
         wait
     );
 
-    subscribe_on_session(&session, discover, ke, topic_stale_after).await
+    subscribe_discover_and_samples(&session, ke, topic_stale_after).await
 }
 
 fn log_zenoh_attachment(session: &zenoh::Session) {
@@ -304,7 +268,6 @@ pub fn zenoh_config_for_subscriber_from_file(
     c.insert_json5("listen/endpoints", "[]")
         .map_err(|e| anyhow::anyhow!("subscriber reshape (clear listen endpoints): {e}"))?;
 
-    // Wait for router before declaring subscribers.
     c.insert_json5("open/return_conditions/connect_scouted", "true")
         .map_err(|e| anyhow::anyhow!("subscriber open.connect_scouted: {e}"))?;
     c.insert_json5("open/return_conditions/declares", "true")

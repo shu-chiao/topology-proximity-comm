@@ -5,5 +5,4 @@
 # Stale timeout: MAIN_SUB_TOPIC_STALE_SEC (default 30, 0 = off).
 
 subscriber:
-  discover: true
   keyexpr: "demo/chatter"
