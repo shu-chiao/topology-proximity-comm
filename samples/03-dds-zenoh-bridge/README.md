@@ -68,10 +68,30 @@ From repo root:
 docker compose -f samples/03-dds-zenoh-bridge/docker-compose.yml up --build --abort-on-container-exit
 ```
 
-Bounded demo (~8 s). You should see:
+Bounded demo (phase 1 ~5 s, phase 2 ~4 s). You should see:
 
-- ROS talker `Publishing: 'Hello N'` and Rust sub samples on `demo/chatter`
-- Rust pub `(pub) put …` and ROS listener `I heard: 'Hello from Rust'`
+**Phase 1 — ROS talker → Rust sub**
+
+- ROS `[talker]: Publishing: 'Hello N'` (×4)
+- Rust `[info] demo/chatter: …, data='Hello N'` — CDR decoded in `main_sub`
+
+**Phase 2 — Rust pub → ROS listener**
+
+- Rust `[pub] put seq=N text='Hello N from Rust' …` (×4)
+- ROS `[listener]: I heard: 'Hello N from Rust'` (×4)
+
+## Wire format & decode
+
+The bridge forwards ROS messages as **CDR bytes** on Zenoh (`zenoh/bytes`, typically 16 bytes for `"Hello N"`). ROS and Rust do not decode the same way:
+
+| Direction | Path | Who encodes | Who decodes |
+|-----------|------|-------------|-------------|
+| **Phase 1** — ROS → Rust | talker → DDS → bridge → `main_sub` | ROS / RMW (automatic CDR) | **Rust** — `main_sub` decodes `std_msgs/msg/String` CDR (`wire/ros_msg_cdr.rs`) and logs `data='…'` |
+| **Phase 2** — Rust → ROS | `main_pub` → bridge → listener | **Rust** — `main_pub` encodes CDR when `ROS_MSG_TYPE=std_msgs/msg/String` | ROS / `rclcpp` (automatic CDR) → `I heard: '…'` |
+
+So phase 2 “just works” on the ROS side because the listener is a native ROS 2 node. Phase 1 needs explicit decode in Rust: `main_sub` is a plain Zenoh client (no `rclrs`/RMW), not an ROS node.
+
+Implementation: encode/decode helpers live in `rust/src/wire/ros_msg_cdr.rs`; Docker sets `ROS_MSG_TYPE=std_msgs/msg/String` for `main_pub`.
 
 ## From the notebook
 
@@ -79,7 +99,7 @@ Bounded demo (~8 s). You should see:
 from demo_runner import build_sample3_docker, run_sample3_docker_demo
 
 build_sample3_docker()
-print(run_sample3_docker_demo(duration_sec=8))
+print(run_sample3_docker_demo(phase1_sec=5, phase2_sec=4))
 ```
 
 ## Layout

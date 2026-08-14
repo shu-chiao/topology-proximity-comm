@@ -49,6 +49,11 @@ pub fn publisher_cli_args(pub_edge: &ResolvedEdgePub) -> PublisherCliArgs {
     }
 }
 
+/// Expand `{n}` in the payload template with the 1-based publish counter.
+fn format_payload(template: &str, seq: u64) -> String {
+    template.replace("{n}", &seq.to_string())
+}
+
 pub async fn run(args: PublisherCliArgs) -> anyhow::Result<()> {
     let ke = args.keyexpr.trim();
     if ke.is_empty() {
@@ -98,10 +103,10 @@ pub async fn run(args: PublisherCliArgs) -> anyhow::Result<()> {
             _ = tokio::signal::ctrl_c() => break,
             _ = ticker.tick() => {
                 seq += 1;
+                let text = format_payload(&args.payload, seq);
                 match wire {
                     MainPubWire::Ros2StdMsgsString => {
-                        let body =
-                            ros_msg_cdr::ros2_std_msgs_string_cdr_utf8(&args.payload)?;
+                        let body = ros_msg_cdr::ros2_std_msgs_string_cdr_utf8(&text)?;
                         let n = body.len();
                         publisher
                             .put(ZBytes::from(body))
@@ -109,19 +114,18 @@ pub async fn run(args: PublisherCliArgs) -> anyhow::Result<()> {
                             .await
                             .map_err(|e| anyhow::anyhow!("put: {e}"))?;
                         println!(
-                            "[pub] put seq={seq} nbytes={n} encoding=zenoh/bytes key=`{ke}`"
+                            "[pub] put seq={seq} text='{text}' nbytes={n} encoding=zenoh/bytes key=`{ke}`"
                         );
                     }
                     MainPubWire::Utf8Framed => {
-                        let line = format!("#{} {}\n", seq, args.payload);
+                        let line = format!("#{} {}\n", seq, text);
                         publisher
                             .put(line.as_str())
                             .await
                             .map_err(|e| anyhow::anyhow!("put: {e}"))?;
                         println!(
-                            "[pub] put seq={seq} nbytes={} key=`{}`",
+                            "[pub] put seq={seq} text='{text}' nbytes={} key=`{ke}`",
                             line.len(),
-                            ke
                         );
                     }
                 }
@@ -130,4 +134,22 @@ pub async fn run(args: PublisherCliArgs) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_payload;
+
+    #[test]
+    fn payload_template_numbered() {
+        assert_eq!(
+            format_payload("Hello {n} from Rust", 1),
+            "Hello 1 from Rust"
+        );
+        assert_eq!(
+            format_payload("Hello {n} from Rust", 4),
+            "Hello 4 from Rust"
+        );
+        assert_eq!(format_payload("static", 2), "static");
+    }
 }

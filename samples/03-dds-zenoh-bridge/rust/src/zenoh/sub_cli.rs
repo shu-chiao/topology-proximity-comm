@@ -1,6 +1,7 @@
 //! Zenoh subscriber client (`main_sub`).
 
 use crate::ResolvedSubConfig;
+use crate::wire::ros_msg_cdr;
 use std::collections::{HashMap, hash_map::Entry};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -56,6 +57,20 @@ fn sample_time_or_recv_ms(sample: &zenoh::sample::Sample) -> String {
     }
 }
 
+fn format_decoded_payload(sample: &zenoh::sample::Sample) -> Option<String> {
+    let bytes = sample.payload().to_bytes();
+    if let Ok(text) = ros_msg_cdr::ros2_std_msgs_string_cdr_decode(&bytes) {
+        return Some(format!("data='{text}'"));
+    }
+    if let Ok(text) = std::str::from_utf8(&bytes) {
+        let t = text.trim_end_matches('\0').trim();
+        if !t.is_empty() && t.is_ascii() {
+            return Some(format!("text='{t}'"));
+        }
+    }
+    None
+}
+
 fn print_sample_line(sample: &zenoh::sample::Sample) {
     let key = sample.key_expr();
     if sample_key_expr_is_ignored(key.as_str()) {
@@ -65,7 +80,12 @@ fn print_sample_line(sample: &zenoh::sample::Sample) {
     let body_len = sample.payload().len();
     let kind = sample.kind();
     let time = sample_time_or_recv_ms(sample);
-    println!("[info] {key}: {{time={time}, body_len={body_len}, encoding={enc:?}, kind={kind}}}");
+    let decoded = format_decoded_payload(sample)
+        .map(|d| format!(", {d}"))
+        .unwrap_or_default();
+    println!(
+        "[info] {key}: {{time={time}, body_len={body_len}, encoding={enc:?}, kind={kind}{decoded}}}"
+    );
 }
 
 fn log_alive_keys_roll_up(alive: &Arc<Mutex<HashMap<String, Instant>>>, print_when_empty: bool) {

@@ -4,5 +4,5 @@
 
 publisher:
   keyexpr: demo/chatter
-  payload: "Hello from Rust"
+  payload: "Hello {n} from Rust"
   period_ms: 1000

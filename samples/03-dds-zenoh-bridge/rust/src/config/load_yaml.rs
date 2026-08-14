@@ -100,7 +100,7 @@ fn default_pub_keyexpr() -> String {
 }
 
 fn default_pub_payload() -> String {
-    "Hello from Rust".into()
+    "Hello {n} from Rust".into()
 }
 
 fn default_pub_period_ms() -> u64 {
