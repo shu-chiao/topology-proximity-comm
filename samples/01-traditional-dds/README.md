@@ -13,16 +13,10 @@ Baseline ROS 2 pub/sub using the default RMW (**Cyclone DDS**). No Zenoh involve
 
 ## Prerequisites
 
-- ROS 2 **Jazzy** on the host **or** Docker (see below)
-- See [docs/prerequisites.md](../../docs/prerequisites.md)
+- **Docker** with Compose v2 — see [docs/prerequisites.md](../../docs/prerequisites.md)
+- Linux recommended (`network_mode: host` for DDS discovery)
 
----
-
-## Option A — Docker (recommended)
-
-No host ROS install required. Uses official `ros:jazzy-ros-base`.
-
-### Build image
+## Build image
 
 From repo root:
 
@@ -30,7 +24,7 @@ From repo root:
 docker compose -f samples/01-traditional-dds/docker-compose.yml build
 ```
 
-### Quick demo (~6 s, talker + listener in one container)
+## Quick demo (~6 s, talker + listener in one container)
 
 ```bash
 docker compose -f samples/01-traditional-dds/docker-compose.yml run --rm demo
@@ -42,71 +36,27 @@ Use an isolated DDS domain to avoid stray traffic on your LAN:
 ROS_DOMAIN_ID=42 docker compose -f samples/01-traditional-dds/docker-compose.yml run --rm demo
 ```
 
-### Manual two-container style (Linux, host network)
+## Manual two-container style (Linux, host network)
 
 Terminal A:
 
 ```bash
-docker compose -f samples/01-traditional-dds/docker-compose.yml run --rm listener
+docker compose -f samples/01-traditional-dds/docker-compose.yml --profile manual run --rm listener
 ```
 
 Terminal B:
 
 ```bash
-docker compose -f samples/01-traditional-dds/docker-compose.yml run --rm talker
+docker compose -f samples/01-traditional-dds/docker-compose.yml --profile manual run --rm talker
 ```
 
-Both services use `network_mode: host` so DDS discovery works on Linux.
-
-### From the notebook
+## From the notebook
 
 ```python
 from demo_runner import build_sample1_docker, run_sample1_docker_demo
 
 build_sample1_docker()
 print(run_sample1_docker_demo(duration_sec=6))
-```
-
----
-
-## Option B — Host ROS install
-
-### Build
-
-```bash
-source /opt/ros/jazzy/setup.bash
-cd samples/01-traditional-dds/cpp
-colcon build
-source install/setup.bash
-```
-
-### Run
-
-Terminal A (talker):
-
-```bash
-source /opt/ros/jazzy/setup.bash
-source samples/01-traditional-dds/cpp/install/setup.bash
-ros2 run demo_nodes talker
-```
-
-Terminal B (listener):
-
-```bash
-source /opt/ros/jazzy/setup.bash
-source samples/01-traditional-dds/cpp/install/setup.bash
-ros2 run demo_nodes listener
-```
-
-The listener should print `I heard: 'Hello N'` once per second.
-
-### Environment
-
-Both nodes must share the same DDS domain and RMW:
-
-```bash
-export ROS_DOMAIN_ID=0          # default
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp   # optional; Jazzy default
 ```
 
 ## Next
