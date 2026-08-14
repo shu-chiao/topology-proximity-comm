@@ -9,8 +9,9 @@ source /opt/ros/jazzy/setup.bash
 source /ws/cpp/install/setup.bash
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
 export ZENOH_SESSION_CONFIG_URI=/ws/configs/zenoh-client.json5
-# Avoid POSIX SHM issues in some container environments.
 export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=false'
+export RUST_LOG="${RUST_LOG:-warn}"
+export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1
 set -u
 
 echo "(docker demo) ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-unset}  duration=${DURATION}s"
@@ -29,7 +30,7 @@ start_router_if_needed() {
     return
   fi
   echo "(docker demo) starting rmw_zenohd on tcp/127.0.0.1:7447"
-  ros2 run rmw_zenoh_cpp rmw_zenohd &
+  ros2 run rmw_zenoh_cpp rmw_zenohd >/dev/null 2>&1 &
   router_pid=$!
   for _ in $(seq 1 30); do
     if router_listening; then
@@ -55,8 +56,8 @@ start_router_if_needed
 
 sleep 0.5
 
-ros2 run demo_nodes listener &
+stdbuf -oL ros2 run demo_nodes listener &
 listener_pid=$!
 
 sleep 1
-timeout "${DURATION}" ros2 run demo_nodes talker || [[ $? -eq 124 ]]
+timeout "${DURATION}" stdbuf -oL ros2 run demo_nodes talker || [[ $? -eq 124 ]]

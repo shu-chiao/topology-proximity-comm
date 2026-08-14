@@ -37,6 +37,36 @@ _SAMPLE3_NOISE = (
 )
 
 
+def format_ros_demo_log(raw: str) -> str:
+    """Drop Docker noise; keep talker/listener lines (samples 1–2)."""
+    import re
+
+    prefix = re.compile(r"^[\w-]+\s*\|\s*")
+    keep = ("(docker demo)", "Publishing:", "I heard:")
+    noise = (
+        "Building ",
+        "Built ",
+        "Attaching to",
+        "Container ",
+        "Creating ",
+        "Created ",
+        "Starting ",
+        "Started ",
+        "Image ",
+        "[+] Building",
+        " DONE ",
+        "zenoh::",
+        " INFO ",
+    )
+    lines: list[str] = []
+    for line in raw.splitlines():
+        if any(n in line for n in noise):
+            continue
+        if any(k in line for k in keep):
+            lines.append(prefix.sub("", line))
+    return "\n".join(lines)
+
+
 def format_sample3_demo_log(raw: str) -> str:
     """Drop Docker/Zenoh noise and group lines by demo phase."""
     import re
@@ -169,7 +199,9 @@ def build_sample1_docker() -> str:
     return (result.stdout or "") + (result.stderr or "")
 
 
-def run_sample1_docker_demo(*, duration_sec: float = 6.0, ros_domain_id: int = 42) -> str:
+def run_sample1_docker_demo(
+    *, duration_sec: float = 6.0, ros_domain_id: int = 42, compact: bool = True
+) -> str:
     """Run sample 1 talker+listener inside the Jazzy container."""
     if not _which("docker"):
         raise RuntimeError("docker not on PATH")
@@ -183,6 +215,8 @@ def run_sample1_docker_demo(*, duration_sec: float = 6.0, ros_domain_id: int = 4
     output = (result.stdout or "") + (result.stderr or "")
     if result.returncode not in (0, 124):
         raise RuntimeError(output or f"docker demo failed with code {result.returncode}")
+    if compact:
+        return format_ros_demo_log(output)
     return output
 
 
@@ -202,7 +236,9 @@ def build_sample2_docker() -> str:
     return (result.stdout or "") + (result.stderr or "")
 
 
-def run_sample2_docker_demo(*, duration_sec: float = 6.0, ros_domain_id: int = 42) -> str:
+def run_sample2_docker_demo(
+    *, duration_sec: float = 6.0, ros_domain_id: int = 42, compact: bool = True
+) -> str:
     """Run sample 2 rmw_zenohd + talker + listener inside the Jazzy container."""
     if not _which("docker"):
         raise RuntimeError("docker not on PATH")
@@ -216,6 +252,8 @@ def run_sample2_docker_demo(*, duration_sec: float = 6.0, ros_domain_id: int = 4
     output = (result.stdout or "") + (result.stderr or "")
     if result.returncode not in (0, 124):
         raise RuntimeError(output or f"docker demo failed with code {result.returncode}")
+    if compact:
+        return format_ros_demo_log(output)
     return output
 
 

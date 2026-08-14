@@ -7,6 +7,7 @@ DURATION="${DEMO_DURATION_SEC:-6}"
 set +u
 source /opt/ros/jazzy/setup.bash
 source /ws/cpp/install/setup.bash
+export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1
 set -u
 
 echo "(docker demo) ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-unset}  duration=${DURATION}s"
@@ -22,4 +23,4 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 sleep 1
-timeout "${DURATION}" ros2 run demo_nodes talker || [[ $? -eq 124 ]]
+timeout "${DURATION}" stdbuf -oL ros2 run demo_nodes talker || [[ $? -eq 124 ]]

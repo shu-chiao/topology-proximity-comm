@@ -77,8 +77,8 @@ Bounded demo (phase 1 ~5 s, phase 2 ~4 s). You should see:
 
 **Phase 2 — Rust pub → ROS listener**
 
-- Rust `[pub] put seq=N text='Hello N from Rust' …` (×4)
-- ROS `[listener]: I heard: 'Hello N from Rust'` (×4)
+- Rust `[pub] put seq=N text='Hello 0 from Rust' …` (×4, 0-based like ROS talker)
+- ROS `[listener]: I heard: 'Hello 0 from Rust'` … `'Hello 3 from Rust'`
 
 ## Wire format & decode
 
@@ -91,7 +91,7 @@ The bridge forwards ROS messages as **CDR bytes** on Zenoh (`zenoh/bytes`, typic
 
 So phase 2 “just works” on the ROS side because the listener is a native ROS 2 node. Phase 1 needs explicit decode in Rust: `main_sub` is a plain Zenoh client (no `rclrs`/RMW), not an ROS node.
 
-Implementation: encode/decode helpers live in `rust/src/wire/ros_msg_cdr.rs`; Docker sets `ROS_MSG_TYPE=std_msgs/msg/String` for `main_pub`.
+Implementation: encode/decode helpers live in `rust/src/wire/ros_msg_cdr.rs`; Docker sets `ROS_MSG_TYPE=std_msgs/msg/String` for `main_pub`. Both ROS talker and Rust pub use **0-based** `Hello N` numbering (`Hello 0` … `Hello 3` over 4 s).
 
 ## From the notebook
 

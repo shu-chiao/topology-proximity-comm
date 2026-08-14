@@ -4,7 +4,7 @@
   <name>demo_nodes</name>
   <version>0.1.0</version>
   <description>Demo talker and listener for topology-proximity-comm samples</description>
-  <maintainer email="user@todo.todo">user</maintainer>
+  <maintainer email="stonebridgecfsu@gmail.com">shu-chiao</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

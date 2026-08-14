@@ -49,9 +49,9 @@ pub fn publisher_cli_args(pub_edge: &ResolvedEdgePub) -> PublisherCliArgs {
     }
 }
 
-/// Expand `{n}` in the payload template with the 1-based publish counter.
+/// Expand `{n}` in the payload template with a 0-based counter (matches ROS talker `Hello 0…`).
 fn format_payload(template: &str, seq: u64) -> String {
-    template.replace("{n}", &seq.to_string())
+    template.replace("{n}", &seq.saturating_sub(1).to_string())
 }
 
 pub async fn run(args: PublisherCliArgs) -> anyhow::Result<()> {
@@ -144,11 +144,11 @@ mod tests {
     fn payload_template_numbered() {
         assert_eq!(
             format_payload("Hello {n} from Rust", 1),
-            "Hello 1 from Rust"
+            "Hello 0 from Rust"
         );
         assert_eq!(
             format_payload("Hello {n} from Rust", 4),
-            "Hello 4 from Rust"
+            "Hello 3 from Rust"
         );
         assert_eq!(format_payload("static", 2), "static");
     }

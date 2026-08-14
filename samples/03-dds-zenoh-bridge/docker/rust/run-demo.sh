@@ -11,7 +11,10 @@ export MAIN_SUB_ROUTER="${MAIN_SUB_ROUTER:-tcp/127.0.0.1:7447}"
 export MAIN_PUB_ROUTER="${MAIN_PUB_ROUTER:-tcp/127.0.0.1:7447}"
 export MAIN_PUB_KEYEXPR="${MAIN_PUB_KEYEXPR:-demo/chatter}"
 export ROS_MSG_TYPE="${ROS_MSG_TYPE:-std_msgs/msg/String}"
-export MAIN_PUB_PAYLOAD="${MAIN_PUB_PAYLOAD:-Hello {n} from Rust}"
+# Default must use single quotes — `{n}` breaks bash brace expansion in double quotes.
+if [[ -z "${MAIN_PUB_PAYLOAD:-}" ]]; then
+  export MAIN_PUB_PAYLOAD='Hello {n} from Rust'
+fi
 export MAIN_SUB_ZENOH_JSON5="${MAIN_SUB_ZENOH_JSON5:-/build/configs/zenoh_client-as-docker.json5}"
 export MAIN_PUB_ZENOH_JSON5="${MAIN_PUB_ZENOH_JSON5:-/build/configs/zenoh_client-as-docker.json5}"
 export EDGE_AGENT_SUB_YAML="${EDGE_AGENT_SUB_YAML:-/build/configs/edge_agent-sub.yaml}"
