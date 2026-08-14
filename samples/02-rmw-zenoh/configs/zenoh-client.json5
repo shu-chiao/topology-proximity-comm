@@ -1,4 +1,4 @@
-// rmw_zenoh client config — dial local zenohd (infra/docker-compose.yml).
+// rmw_zenoh client config — dial local zenohd on tcp/127.0.0.1:7447 (sample 2 Docker demo).
 {
   mode: "client",
 

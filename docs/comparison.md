@@ -72,8 +72,8 @@ ROS nodes on the publisher host stay on DDS. The bridge selectively forwards top
 
 Keep these on the same Zenoh release line (**1.9.x** in this repo):
 
-- `eclipse/zenoh` Docker image (`infra/docker-compose.yml`)
-- `zenoh-bridge-ros2dds` binary
+- `zenohd` / `zenoh-bridge-ros2dds` in sample 3 `docker/ros2` image
+- `rmw_zenoh_cpp` in sample 2 Docker image
 - Rust `zenoh` crate (`samples/03-dds-zenoh-bridge/rust/`)
 
-See [prerequisites.md](prerequisites.md) for install steps.
+See [prerequisites.md](prerequisites.md) for Docker setup.

@@ -1,25 +1,19 @@
 # topology-proximity-comm — common workflows
 
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-COMPOSE := docker compose -f infra/docker-compose.yml
 
-.PHONY: default help docker-up docker-down check-bridge install-zenoh-bridge install-plugin build-sample3
+.PHONY: default help check-bridge install-zenoh-bridge install-plugin build-sample3
 
 default: help
 
 help:
 	@echo "Targets:"
-	@echo "  make docker-up | docker-down — local zenohd (infra/docker-compose.yml)"
-	@echo "  make check-bridge            — zenoh-bridge-ros2dds path/version"
-	@echo "  make install-zenoh-bridge    — APT: zenoh-bridge-ros2dds (sudo)"
-	@echo "  make install-plugin          — APT: zenoh-plugin-ros2dds for zenohd"
-	@echo "  make build-sample3           — cargo build in sample 3 rust/"
-
-docker-up:
-	$(COMPOSE) up -d
-
-docker-down:
-	$(COMPOSE) down
+	@echo "  make check-bridge            — zenoh-bridge-ros2dds path/version (host dev)"
+	@echo "  make install-zenoh-bridge    — APT: zenoh-bridge-ros2dds (sudo, host dev)"
+	@echo "  make install-plugin          — APT: zenoh-plugin-ros2dds for zenohd (host dev)"
+	@echo "  make build-sample3           — cargo build in sample 3 rust/ (host dev)"
+	@echo ""
+	@echo "Run samples via Docker — see README.md and samples/*/README.md"
 
 check-bridge:
 	@command -v zenoh-bridge-ros2dds >/dev/null 2>&1 && zenoh-bridge-ros2dds --version \
