@@ -2,11 +2,7 @@
 name = "topology_proximity_comm"
 version = "0.1.0"
 edition = "2021"
-default-run = "zenoh_agent"
-
-[[bin]]
-name = "zenoh_agent"
-path = "src/bin/zenoh_agent.rs"
+default-run = "main_sub"
 
 [[bin]]
 name = "main_sub"
@@ -15,14 +11,6 @@ path = "src/bin/main_sub.rs"
 [[bin]]
 name = "main_pub"
 path = "src/bin/main_pub.rs"
-
-[[bin]]
-name = "main_srv_client"
-path = "src/bin/main_srv_client.rs"
-
-[[bin]]
-name = "main_action_client"
-path = "src/bin/main_action_client.rs"
 
 [dependencies]
 anyhow = "1"

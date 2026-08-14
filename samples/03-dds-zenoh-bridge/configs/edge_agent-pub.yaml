@@ -1,9 +1,0 @@
-# Zenoh **`put`** tooling — **`cargo run --bin main_pub`**
-#
-# Overrides: **`EDGE_AGENT_PUB_YAML`**, **`MAIN_PUB_*`**, **`ROS_MSG_TYPE`**.
-# ROS bridge + **`std_msgs/msg/String`**: **`MAIN_PUB_KEYEXPR=chatter`**, **`ROS_MSG_TYPE=std_msgs/msg/String`**.
-
-publisher:
-  keyexpr: demo/rust_pub
-  payload: Hello zenoh from main_pub
-  period_ms: 1000

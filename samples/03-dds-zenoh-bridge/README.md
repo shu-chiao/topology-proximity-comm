@@ -87,10 +87,9 @@ print(run_sample3_docker_demo(duration_sec=8))
 ```text
 cpp/demo_nodes/     ROS talker + listener (built into ros2 image)
 rust/               Zenoh pub/sub clients (built into rust image)
-configs/            bridge JSON5 + agent YAML
+configs/            bridge JSON5 + pub/sub YAML (4 files)
 docker/ros2/        ros2 container Dockerfile + run script
 docker/rust/        rust container Dockerfile + run script
-scripts/            advanced host scripts (reference only)
 ```
 
 ## Differences vs other samples

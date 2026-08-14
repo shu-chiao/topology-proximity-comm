@@ -1,4 +1,4 @@
-//! Zenoh subscriber (`cargo run --bin main_sub`). No agent or bridge spawn.
+//! Zenoh subscriber (`cargo run --bin main_sub`).
 //!
 //! Config: `configs/edge_agent-sub.yaml` or `EDGE_AGENT_SUB_YAML`.
 //! Router override: `MAIN_SUB_ROUTER=tcp/host:7447`.
@@ -11,7 +11,7 @@ use std::time::Duration;
 use topology_proximity_comm::config::configs_dir;
 use topology_proximity_comm::zenoh::sub_cli;
 use topology_proximity_comm::zenoh::sub_cli::WaitPolicy;
-use topology_proximity_comm::ResolvedEdgeAgent;
+use topology_proximity_comm::ResolvedSubConfig;
 
 fn resolve_client_zenoh_json5() -> PathBuf {
     let cfgs = configs_dir();
@@ -35,15 +35,14 @@ fn resolve_client_zenoh_json5() -> PathBuf {
                 root.join(path)
             }
         }
-        None => cfgs.join("zenoh_agent-as-client.json5"),
+        None => cfgs.join("zenoh_client-as-docker.json5"),
     }
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Load config ===
-    let edge_yaml = ResolvedEdgeAgent::sub_default_yaml_path();
-    let edge = ResolvedEdgeAgent::load_sub_default()?;
+    let edge_yaml = ResolvedSubConfig::sub_default_yaml_path();
+    let sub = ResolvedSubConfig::load_sub_default()?;
     let zenoh_cfg = resolve_client_zenoh_json5();
     if !zenoh_cfg.is_file() {
         anyhow::bail!(
@@ -51,10 +50,8 @@ async fn main() -> anyhow::Result<()> {
             zenoh_cfg.display(),
         );
     }
-    // ======
 
-    // Discover stale timeout ===
-    let topic_stale_after = if edge.subscriber_discover {
+    let topic_stale_after = if sub.discover {
         let sec: u64 = std::env::var("MAIN_SUB_TOPIC_STALE_SEC")
             .ok()
             .and_then(|s| s.parse().ok())
@@ -72,14 +69,12 @@ async fn main() -> anyhow::Result<()> {
         "(main_sub) edge `{}` zenoh `{}` discover={} keyexpr=`{}` stale_after={:?}",
         edge_yaml.display(),
         zenoh_cfg.display(),
-        edge.subscriber_discover,
-        edge.subscriber_keyexpr,
+        sub.discover,
+        sub.keyexpr,
         topic_stale_after,
     );
-    // ======
 
-    // Build args ===
-    let mut args = sub_cli::subscriber_args(&edge, WaitPolicy::UntilCtrlC);
+    let mut args = sub_cli::subscriber_args(&sub, WaitPolicy::UntilCtrlC);
     args.config_path = zenoh_cfg;
     args.topic_stale_after = topic_stale_after;
     if let Ok(s) = std::env::var("MAIN_SUB_ROUTER") {
@@ -88,9 +83,6 @@ async fn main() -> anyhow::Result<()> {
             args.router_connect_override = Some(t.to_string());
         }
     }
-    // ======
 
-    // Subscribe ===
     sub_cli::run(args).await
-    // ======
 }

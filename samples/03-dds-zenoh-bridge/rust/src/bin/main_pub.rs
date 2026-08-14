@@ -1,8 +1,6 @@
 //! Zenoh publisher (`cargo run --bin main_pub`).
 //!
 //! Config: `EDGE_AGENT_PUB_YAML`, `MAIN_PUB_*`, `ROS_MSG_TYPE`.
-//! Wire format: see `docs/zenoh-bridge-ros2dds-wire-contract.md`.
-
 use std::path::{Path, PathBuf};
 
 use topology_proximity_comm::config::configs_dir;
@@ -31,7 +29,7 @@ fn resolve_client_zenoh_json5() -> PathBuf {
                 root.join(path)
             }
         }
-        None => cfgs.join("zenoh_agent-as-client.json5"),
+        None => cfgs.join("zenoh_client-as-docker.json5"),
     }
 }
 

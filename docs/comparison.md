@@ -32,13 +32,14 @@ talker ──rmw_zenoh──► zenohd ◄──rmw_zenoh── listener
 
 ROS 2 API is unchanged. The RMW layer speaks Zenoh instead of DDS. Every node must use `rmw_zenoh_cpp` and reach the same router.
 
-### Sample 3 — DDS + Bridge
+### Sample 3 — DDS + Bridge (bidirectional)
 
 ```text
-talker ──DDS──► bridge ──Zenoh──► zenohd ──Zenoh──► rust_sub
+talker ──DDS──► bridge ──Zenoh──► zenohd ──Zenoh──► main_sub
+main_pub ──Zenoh──► zenohd ──Zenoh──► bridge ──DDS──► listener
 ```
 
-ROS nodes on the publisher host stay on DDS. The bridge selectively forwards topics into Zenoh. Remote consumers can be Rust Zenoh clients or another bridge on the subscriber side.
+ROS nodes stay on local DDS. The bridge forwards selected topics into Zenoh. Remote Rust clients can both subscribe (ROS → Rust) and publish (Rust → ROS) through the same router.
 
 ## When to pick which
 
