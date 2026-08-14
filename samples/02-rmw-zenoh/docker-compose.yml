@@ -1,0 +1,74 @@
+# Sample 2 — rmw_zenoh_cpp in ROS 2 Jazzy container.
+#
+# Quick demo (rmw_zenohd + talker + listener, ~6 s):
+#   docker compose -f samples/02-rmw-zenoh/docker-compose.yml run --rm demo
+#
+# Manual two-terminal style (Linux host network; start zenohd first):
+#   docker compose -f samples/02-rmw-zenoh/docker-compose.yml --profile manual up zenohd
+#   docker compose -f samples/02-rmw-zenoh/docker-compose.yml --profile manual run --rm listener
+#   docker compose -f samples/02-rmw-zenoh/docker-compose.yml --profile manual run --rm talker
+#
+name: sample02-rmw-zenoh
+
+x-rmw-env: &rmw-env
+  RMW_IMPLEMENTATION: rmw_zenoh_cpp
+  ZENOH_SESSION_CONFIG_URI: /ws/configs/zenoh-client.json5
+  ZENOH_CONFIG_OVERRIDE: transport/shared_memory/enabled=false
+
+services:
+  demo:
+    build: .
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      DEMO_DURATION_SEC: ${DEMO_DURATION_SEC:-6}
+      <<: *rmw-env
+
+  zenohd:
+    build: .
+    network_mode: host
+    profiles: [manual]
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+    command:
+      - bash
+      - -lc
+      - |
+        set +u
+        source /opt/ros/jazzy/setup.bash
+        set -u
+        exec ros2 run rmw_zenoh_cpp rmw_zenohd
+
+  talker:
+    build: .
+    network_mode: host
+    profiles: [manual]
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      <<: *rmw-env
+    command:
+      - bash
+      - -lc
+      - |
+        set +u
+        source /opt/ros/jazzy/setup.bash
+        source /ws/cpp/install/setup.bash
+        set -u
+        exec ros2 run demo_nodes talker
+
+  listener:
+    build: .
+    network_mode: host
+    profiles: [manual]
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      <<: *rmw-env
+    command:
+      - bash
+      - -lc
+      - |
+        set +u
+        source /opt/ros/jazzy/setup.bash
+        source /ws/cpp/install/setup.bash
+        set -u
+        exec ros2 run demo_nodes listener

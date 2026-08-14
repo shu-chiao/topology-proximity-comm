@@ -1,0 +1,8 @@
+# Publisher config for Sample 3 Docker rust leg (→ ROS `/demo/chatter` via bridge).
+#
+# Env overrides: MAIN_PUB_KEYEXPR, MAIN_PUB_PAYLOAD, ROS_MSG_TYPE, MAIN_PUB_ROUTER.
+
+publisher:
+  keyexpr: demo/chatter
+  payload: "Hello {n} from Rust"
+  period_ms: 1000

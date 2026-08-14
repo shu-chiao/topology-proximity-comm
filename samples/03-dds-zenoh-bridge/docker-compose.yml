@@ -1,0 +1,40 @@
+# Sample 3 — two-container DDS + Zenoh bridge demo.
+#
+# Quick demo (ros2 + rust containers, two phases × ~4 s):
+#   docker compose -f samples/03-dds-zenoh-bridge/docker-compose.yml up --build --abort-on-container-exit
+#
+# Or run legs separately (Linux host network):
+#   docker compose -f samples/03-dds-zenoh-bridge/docker-compose.yml up --build ros2
+#   docker compose -f samples/03-dds-zenoh-bridge/docker-compose.yml run --rm rust
+#
+name: sample03-dds-zenoh-bridge
+
+services:
+  ros2:
+    build:
+      context: .
+      dockerfile: docker/ros2/Dockerfile
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      PHASE1_SEC: ${PHASE1_SEC:-5}
+      PHASE2_SEC: ${PHASE2_SEC:-4}
+      RUST_WAIT_ROS_SEC: ${RUST_WAIT_ROS_SEC:-3}
+
+  rust:
+    build:
+      context: .
+      dockerfile: docker/rust/Dockerfile
+    network_mode: host
+    depends_on:
+      ros2:
+        condition: service_started
+    environment:
+      PHASE1_SEC: ${PHASE1_SEC:-5}
+      PHASE2_SEC: ${PHASE2_SEC:-4}
+      RUST_WAIT_ROS_SEC: ${RUST_WAIT_ROS_SEC:-3}
+      MAIN_SUB_ROUTER: tcp/127.0.0.1:7447
+      MAIN_PUB_ROUTER: tcp/127.0.0.1:7447
+      MAIN_PUB_KEYEXPR: demo/chatter
+      ROS_MSG_TYPE: std_msgs/msg/String
+      MAIN_PUB_PAYLOAD: "Hello {n} from Rust"

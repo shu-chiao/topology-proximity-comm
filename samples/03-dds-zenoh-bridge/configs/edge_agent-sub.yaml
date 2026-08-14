@@ -1,0 +1,8 @@
+# Subscriber YAML for main_sub (Docker rust leg).
+#
+# Zenoh transport JSON5: MAIN_SUB_ZENOH_JSON5 (default zenoh_client-as-docker.json5).
+# Router: MAIN_SUB_ROUTER=tcp/<host>:7447
+# Stale timeout: MAIN_SUB_TOPIC_STALE_SEC (default 30, 0 = off).
+
+subscriber:
+  keyexpr: "demo/chatter"

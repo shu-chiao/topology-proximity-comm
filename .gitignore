@@ -1,5 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+
 # Rust / Cargo build output
 /target/
+**/target/
+
+# ROS / colcon
+**/build/
+**/install/
+**/log/
 
 # Logs
 *.log
@@ -9,6 +19,7 @@
 .vscode/
 *.swp
 *~
+.ipynb_checkpoints/
 
 # OS
 .DS_Store
