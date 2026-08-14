@@ -10,55 +10,63 @@ Same as Sample 1:
 |------|-------|
 | Topic | `/demo/chatter` |
 | Type | `std_msgs/msg/String` |
+| Rate | 1 Hz |
+| QoS | reliable, keep-last depth 10 |
 
 ## Prerequisites
 
-- ROS 2 **Jazzy** with `rmw_zenoh_cpp` — see [docs/prerequisites.md](../../docs/prerequisites.md)
-- **zenohd** router running:
+- **Docker** with Compose v2 — see [docs/prerequisites.md](../../docs/prerequisites.md)
+- Linux recommended (`network_mode: host`)
+
+The quick demo starts `rmw_zenohd` inside the container, or reuses an existing router on `tcp/127.0.0.1:7447`.
+
+## Build image
+
+From repo root:
 
 ```bash
-docker compose -f infra/docker-compose.yml up -d
+docker compose -f samples/02-rmw-zenoh/docker-compose.yml build
 ```
 
-## Build
+## Quick demo (~6 s, rmw_zenohd + talker + listener in one container)
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-cd samples/02-rmw-zenoh/cpp
-colcon build
-source install/setup.bash
+docker compose -f samples/02-rmw-zenoh/docker-compose.yml run --rm demo
 ```
 
-## Run
-
-Set the Zenoh RMW and point at the local router:
+Use an isolated domain to avoid stray traffic on your LAN:
 
 ```bash
-export RMW_IMPLEMENTATION=rmw_zenoh_cpp
-export ZENOH_CONFIG_OVERRIDE='mode="client";connect/endpoints=["tcp/127.0.0.1:7447"]'
+ROS_DOMAIN_ID=42 docker compose -f samples/02-rmw-zenoh/docker-compose.yml run --rm demo
 ```
 
-Or use the bundled config file:
+## Manual multi-container style (Linux, host network)
+
+Terminal A — router:
 
 ```bash
-export RMW_IMPLEMENTATION=rmw_zenoh_cpp
-export ZENOH_SESSION_CONFIG_URI="$(pwd)/samples/02-rmw-zenoh/configs/zenoh-client.json5"
+docker compose -f samples/02-rmw-zenoh/docker-compose.yml --profile manual up zenohd
 ```
 
-Terminal A (talker):
+Terminal B — listener:
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-source samples/02-rmw-zenoh/cpp/install/setup.bash
-ros2 run demo_nodes talker
+docker compose -f samples/02-rmw-zenoh/docker-compose.yml --profile manual run --rm listener
 ```
 
-Terminal B (listener):
+Terminal C — talker:
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-source samples/02-rmw-zenoh/cpp/install/setup.bash
-ros2 run demo_nodes listener
+docker compose -f samples/02-rmw-zenoh/docker-compose.yml --profile manual run --rm talker
+```
+
+## From the notebook
+
+```python
+from demo_runner import build_sample2_docker, run_sample2_docker_demo
+
+build_sample2_docker()
+print(run_sample2_docker_demo(duration_sec=6))
 ```
 
 ## Differences vs Sample 1
@@ -66,11 +74,11 @@ ros2 run demo_nodes listener
 | | Sample 1 (DDS) | Sample 2 (rmw_zenoh) |
 |--|----------------|----------------------|
 | Middleware | Cyclone DDS | Zenoh via `rmw_zenoh_cpp` |
-| Router required | no | yes (`zenohd` on `:7447`) |
+| Router required | no | yes (`rmw_zenohd` on `:7447`) |
 | ROS code changes | — | none |
 | WAN-friendly | LAN multicast | yes (via Zenoh router) |
 
-Both talker and listener **must** use `rmw_zenoh_cpp` and reach the same `zenohd`.
+Both talker and listener **must** use `rmw_zenoh_cpp` and reach the same router.
 
 ## Next
 
