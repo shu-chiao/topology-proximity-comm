@@ -1,6 +1,18 @@
 # `configs/` — naming
 
-Paths are **`{repo}/configs/<file>`**. Switch files with **`EDGE_AGENT_*`**, **`MAIN_*`**, **`MASTER_SRV_CLIENT_YAML`** (see root **`README.md`**).
+Paths resolve under **`archived/configs/`** (or absolute paths). Override files with env vars listed below.
+
+## Env overrides
+
+| Env var | Default file | Used by |
+|---------|--------------|---------|
+| **`EDGE_AGENT_YAML`** | `edge_agent.yaml` | `zenoh_agent` |
+| **`EDGE_AGENT_SUB_YAML`** | `edge_agent-sub.yaml` | `main_sub` |
+| **`EDGE_AGENT_PUB_YAML`** | `edge_agent-pub.yaml` | `main_pub` |
+| **`MASTER_SRV_CLIENT_YAML`** | `master_srv-client.yaml` | `main_srv_client` |
+| **`MASTER_ACTION_CLIENT_YAML`** | `master_action-client.yaml` | `main_action_client` |
+
+Client binaries also accept **`MAIN_*`** overrides (router, keyexpr, timeouts, etc.) — see comments in each YAML file and the matching `src/bin/*.rs`.
 
 ---
 
@@ -10,8 +22,8 @@ Paths are **`{repo}/configs/<file>`**. Switch files with **`EDGE_AGENT_*`**, **`
 <who>-<task>.yaml
 ```
 
-- **`<who>`** — e.g. **`edge_agent`** (agent + bridge) or **`master_srv`** (**`main_srv_client`** presets). Multi-word **`who`** uses **`_`** (same idea as **`zenoh_agent`** in JSON5).
-- **`<task>`** — sub-mode (**`sub`**, **`pub`**, **`srv-client`**). Omit **`-<task>`** for the default file (**`<who>.yaml`** only).
+- **`<who>`** — e.g. **`edge_agent`** (agent + bridge) or **`master_srv`** / **`master_action`** (client presets). Multi-word **`who`** uses **`_`** (same idea as **`zenoh_agent`** in JSON5).
+- **`<task>`** — sub-mode (**`sub`**, **`pub`**, **`srv-client`**, **`action-client`**). Omit **`-<task>`** for the default file (**`<who>.yaml`** only).
 
 | File | Meaning |
 |------|---------|
@@ -19,6 +31,7 @@ Paths are **`{repo}/configs/<file>`**. Switch files with **`EDGE_AGENT_*`**, **`
 | **`edge_agent-sub.yaml`** | **`main_sub`** / subscriber profile. |
 | **`edge_agent-pub.yaml`** | **`main_pub`** / publisher profile. |
 | **`master_srv-client.yaml`** | **`main_srv_client`** · ROS service over Zenoh. |
+| **`master_action-client.yaml`** | **`main_action_client`** · ROS action over Zenoh. |
 
 ---
 
@@ -29,7 +42,7 @@ Paths are **`{repo}/configs/<file>`**. Switch files with **`EDGE_AGENT_*`**, **`
 ```
 
 - **`zenoh_agent`** — Rust **`zenoh`** session; **`zenoh_bridge`** — **`zenoh-bridge-ros2dds`** config (**`_`** keeps **`who`** one token).
-- **`<task>`** — **`pub`**, **`sub`**, **`srv-server`**, **`local`**, … Agent “default” files drop the extra segment (**`-as-peer`** / **`-as-client`**).
+- **`<task>`** — **`pub`**, **`sub`**, **`srv-server`**, **`action-server`**, **`local`**, … Agent “default” files drop the extra segment (**`-as-peer`** / **`-as-client`**).
 - **`<role>`** — **`peer`** (listen / mesh) vs **`client`** (dial **`zenohd`**) vs **`router`**.
 
 | File | who | task | Zenoh role |
@@ -40,6 +53,7 @@ Paths are **`{repo}/configs/<file>`**. Switch files with **`EDGE_AGENT_*`**, **`
 | **`zenoh_bridge-as-pub-client.json5`** | **`zenoh_bridge`** | **`pub`** | **`client`** |
 | **`zenoh_bridge-as-sub-client.json5`** | **`zenoh_bridge`** | **`sub`** | **`client`** |
 | **`zenoh_bridge-as-srv-server-client.json5`** | **`zenoh_bridge`** | **`srv-server`** | **`client`** |
+| **`zenoh_bridge-as-action-server-client.json5`** | **`zenoh_bridge`** | **`action-server`** | **`client`** |
 
 ---
 

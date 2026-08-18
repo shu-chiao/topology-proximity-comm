@@ -29,7 +29,10 @@ Align **zenoh** (crate), **eclipse/zenoh**, and **zenoh-bridge-ros2dds** on **1.
 
 ## Quick start
 
+Run from **`archived/`** (this directory):
+
 ```bash
+cd archived
 docker compose up -d
 cargo run --bin zenoh_agent
 ```
@@ -43,13 +46,15 @@ src/
   wire/      ROS CDR + log tags for Zenoh queries
 configs/     YAML + JSON5 for agent, bridge, clients
 bash/        local bridge + ROS demo scripts
+docs/        architecture, bridge setup, wire contract
+docker-compose.yml   local zenohd (cloud router)
+Makefile     build, docker-up, install-zenoh-bridge
 ```
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for module roles and how to extend.
 
 ## See also
 
-- [`configs/README.md`](configs/README.md) — YAML / JSON5 naming
+- [`configs/README.md`](configs/README.md) — YAML / JSON5 naming and env overrides
 - [`docs/ros2-bridge.md`](docs/ros2-bridge.md) — bridge install & usage
 - [`docs/zenoh-bridge-ros2dds-wire-contract.md`](docs/zenoh-bridge-ros2dds-wire-contract.md) — wire format
-- [`docs/dev.log`](docs/dev.log) — operational pitfalls & integration notes

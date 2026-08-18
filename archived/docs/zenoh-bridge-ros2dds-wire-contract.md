@@ -27,7 +27,7 @@ Example — **`std_msgs/msg/String`**:
 - CDR header: `00 01 00 00`
 - Then string length, UTF-8 text, and a trailing `NUL`
 
-Rust helpers: [src/utils/ros_msg_cdr.rs](../src/utils/ros_msg_cdr.rs).
+Rust helpers: [src/wire/ros_msg_cdr.rs](../src/wire/ros_msg_cdr.rs).
 
 ### Encoding
 
@@ -67,7 +67,7 @@ Example — **`example_interfaces/srv/AddTwoInts`**:
 - Request: two **`int64`** fields (`a`, `b`)
 - Response: one **`int64`** field (`sum`)
 
-Rust helpers: [src/utils/ros_srv_cdr.rs](../src/utils/ros_srv_cdr.rs).
+Rust helpers: [src/wire/ros_srv_cdr.rs](../src/wire/ros_srv_cdr.rs).
 
 Try the client:
 
@@ -96,7 +96,7 @@ Example — **`turtlesim/action/RotateAbsolute`**:
 - Feedback: **`remaining`** (`float`, radians left) — bridge may wrap with **`goal_id`** (24-byte CDR)
 - Result: **`delta`** (`float`)
 
-Rust helpers: [src/utils/ros_action_cdr.rs](../src/utils/ros_action_cdr.rs).
+Rust helpers: [src/wire/ros_action_cdr.rs](../src/wire/ros_action_cdr.rs).
 
 Try the client (with [run-local-bridge-and-action-server.sh](../bash/run-local-bridge-and-action-server.sh) on the edge):
 
