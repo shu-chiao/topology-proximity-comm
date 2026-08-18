@@ -29,13 +29,15 @@ Align **zenoh** (crate), **eclipse/zenoh**, and **zenoh-bridge-ros2dds** on **1.
 
 ## Quick start
 
-Run from **`archived/`** (this directory):
+From the **repo root**:
 
 ```bash
 cd archived
 docker compose up -d
 cargo run --bin zenoh_agent
 ```
+
+If you are already in **`archived/`**, skip `cd archived`.
 
 ## Layout
 
