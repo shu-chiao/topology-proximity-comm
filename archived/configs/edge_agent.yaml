@@ -1,4 +1,4 @@
-# cargo run --bin zenoh_agent: agent + bridge settings. Paths resolve under {repo}/configs/ (or absolute).
+# cargo run --bin zenoh_agent: agent + bridge settings. Paths resolve under archived/configs/ (or absolute).
 # Your ros2 nodes still use DDS env from the shell; bridge side is bridge.* here.
 
 zenoh:

@@ -1,7 +1,7 @@
 //! Zenoh subscriber only (no ROS bridge).
 //!
-//! Use [`run_on_agent_session`] to share the agent session, or [`run`] for a standalone client session.
-//! With `discover` enabled, prints new topics and optional stale warnings alongside sample lines.
+//! Standalone client session via [`run`]. With `discover` enabled, prints new topics
+//! and optional stale warnings alongside sample lines.
 
 use crate::ResolvedEdgeAgent;
 use std::collections::{HashMap, hash_map::Entry};
@@ -11,9 +11,6 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use zenoh::Wait;
 
-/// How often discover reprints the full topic list when embedded in the agent.
-const DISCOVER_EMBEDDED_SUMMARY_INTERVAL: Duration = Duration::from_secs(60);
-
 /// Topic name tails to skip (e.g. rosout, parameter_events).
 const IGNORE_SAMPLE_TOPIC_TAILS: &[&str] = &["parameter_events", "rosout"];
 
@@ -22,62 +19,25 @@ fn sample_key_expr_is_ignored(ke: &str) -> bool {
     IGNORE_SAMPLE_TOPIC_TAILS.iter().any(|&n| tail == n)
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum WaitPolicy {
-    /// Exit on Ctrl+C (standalone subscriber).
-    UntilCtrlC,
-    /// Run until the host process stops (embedded in the agent).
-    Never,
-}
-
 pub struct SubscribersArgs {
     pub config_path: PathBuf,
     /// Print discover lines for new and stale topics.
     pub discover: bool,
     pub keyexpr: String,
-    pub wait: WaitPolicy,
     /// Zenoh router address override (e.g. `tcp/host:7447`).
     pub router_connect_override: Option<String>,
     /// Mark a topic stale after this long with no samples (`None` disables).
     pub topic_stale_after: Option<Duration>,
 }
 
-pub fn subscriber_args(edge: &ResolvedEdgeAgent, wait: WaitPolicy) -> SubscribersArgs {
+pub fn subscriber_args(edge: &ResolvedEdgeAgent) -> SubscribersArgs {
     SubscribersArgs {
         config_path: edge.zenoh_config_path.clone(),
         discover: edge.subscriber_discover,
         keyexpr: edge.subscriber_keyexpr.clone(),
-        wait,
         router_connect_override: None,
         topic_stale_after: None,
     }
-}
-
-pub async fn run_from_default_edge_yaml(wait: WaitPolicy) -> anyhow::Result<()> {
-    let edge = ResolvedEdgeAgent::load_sub_default()?;
-    run(subscriber_args(&edge, wait)).await
-}
-
-/// Subscribe using an existing agent session (same router path as the agent).
-pub async fn run_on_agent_session(
-    session: zenoh::Session,
-    edge: ResolvedEdgeAgent,
-    wait: WaitPolicy,
-) -> anyhow::Result<()> {
-    let discover = edge.subscriber_discover;
-    let ke_owned = edge.subscriber_keyexpr.trim().to_owned();
-    if ke_owned.is_empty() {
-        anyhow::bail!("subscriber keyexpr is empty");
-    }
-
-    println!(
-        "(Sub) `{}` ZID {} {} {wait:?}",
-        ke_owned,
-        session.zid(),
-        if discover { "discover+info" } else { "samples" },
-    );
-
-    subscribe_on_session(&session, discover, &ke_owned, wait, None).await
 }
 
 fn sample_time_or_recv_ms(sample: &zenoh::sample::Sample) -> String {
@@ -150,7 +110,6 @@ async fn stale_topic_watchdog(alive: Arc<Mutex<HashMap<String, Instant>>>, stale
 async fn subscribe_parallel_discover_and_samples(
     session: &zenoh::Session,
     ke: &str,
-    wait: WaitPolicy,
     topic_stale_after: Option<Duration>,
 ) -> anyhow::Result<()> {
     let alive: Arc<Mutex<HashMap<String, Instant>>> = Arc::new(Mutex::new(HashMap::new()));
@@ -203,27 +162,8 @@ async fn subscribe_parallel_discover_and_samples(
         .unwrap_or_else(|| "(off)".into());
     println!("(Sub) `{ke}` — discover + `[info]` in parallel; stale watchdog {staleness}");
 
-    if matches!(wait, WaitPolicy::Never) {
-        let st_roll = Arc::clone(&alive);
-        tokio::spawn(async move {
-            let mut iv = tokio::time::interval(DISCOVER_EMBEDDED_SUMMARY_INTERVAL);
-            iv.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
-            iv.tick().await;
-            loop {
-                iv.tick().await;
-                log_alive_keys_roll_up(&st_roll, false);
-            }
-        });
-    }
-
-    match wait {
-        WaitPolicy::UntilCtrlC => {
-            tokio::signal::ctrl_c().await?;
-            log_alive_keys_roll_up(&alive, true);
-        }
-        WaitPolicy::Never => std::future::pending::<()>().await,
-    }
-
+    tokio::signal::ctrl_c().await?;
+    log_alive_keys_roll_up(&alive, true);
     Ok(())
 }
 
@@ -231,11 +171,10 @@ async fn subscribe_on_session(
     session: &zenoh::Session,
     discover: bool,
     ke: &str,
-    wait: WaitPolicy,
     topic_stale_after: Option<Duration>,
 ) -> anyhow::Result<()> {
     if discover {
-        return subscribe_parallel_discover_and_samples(session, ke, wait, topic_stale_after).await;
+        return subscribe_parallel_discover_and_samples(session, ke, topic_stale_after).await;
     }
 
     session
@@ -248,13 +187,7 @@ async fn subscribe_on_session(
         .map_err(|e| anyhow::anyhow!("declare_subscriber: {e}"))?;
     println!("(Sub) `{ke}` — waiting…");
 
-    match wait {
-        WaitPolicy::UntilCtrlC => {
-            tokio::signal::ctrl_c().await?;
-        }
-        WaitPolicy::Never => std::future::pending::<()>().await,
-    }
-
+    tokio::signal::ctrl_c().await?;
     Ok(())
 }
 
@@ -263,7 +196,6 @@ pub async fn run(args: SubscribersArgs) -> anyhow::Result<()> {
         config_path,
         discover,
         keyexpr,
-        wait,
         router_connect_override,
         topic_stale_after,
     } = args;
@@ -290,14 +222,13 @@ pub async fn run(args: SubscribersArgs) -> anyhow::Result<()> {
     log_zenoh_attachment(&session);
 
     println!(
-        "(sub) ZID {} `{}` {} {:?}",
+        "(sub) ZID {} `{}` {}",
         session.zid(),
         ke,
         if discover { "discover+info" } else { "samples" },
-        wait
     );
 
-    subscribe_on_session(&session, discover, ke, wait, topic_stale_after).await
+    subscribe_on_session(&session, discover, ke, topic_stale_after).await
 }
 
 fn log_zenoh_attachment(session: &zenoh::Session) {

@@ -9,7 +9,6 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use topology_proximity_comm::zenoh::sub_cli;
-use topology_proximity_comm::zenoh::sub_cli::WaitPolicy;
 use topology_proximity_comm::ResolvedEdgeAgent;
 
 fn resolve_client_zenoh_json5() -> PathBuf {
@@ -78,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
     // ======
 
     // Build args ===
-    let mut args = sub_cli::subscriber_args(&edge, WaitPolicy::UntilCtrlC);
+    let mut args = sub_cli::subscriber_args(&edge);
     args.config_path = zenoh_cfg;
     args.topic_stale_after = topic_stale_after;
     if let Ok(s) = std::env::var("MAIN_SUB_ROUTER") {

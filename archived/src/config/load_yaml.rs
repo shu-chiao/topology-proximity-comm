@@ -11,8 +11,6 @@ pub struct ResolvedEdgeAgent {
     /// `peer` listens on :7411; `wan_client` connects to zenohd only.
     pub zenoh_topology: ZenohTopology,
     pub zenoh_config_path: PathBuf,
-    /// Run subscriber inside the agent session (`main_sub` only today).
-    pub embed_subscriber: bool,
     /// Print discover lines for new topics.
     pub subscriber_discover: bool,
     pub subscriber_keyexpr: String,
@@ -62,8 +60,6 @@ impl Default for ZenohSection {
 
 #[derive(Debug, Deserialize, Default)]
 struct SubscriberSection {
-    #[serde(default)]
-    embed: bool,
     /// Enable discover output for new topics.
     #[serde(default)]
     discover: bool,
@@ -199,7 +195,6 @@ impl ResolvedEdgeAgent {
         Ok(Self {
             zenoh_topology: topology,
             zenoh_config_path,
-            embed_subscriber: parsed.subscriber.embed,
             subscriber_discover: parsed.subscriber.discover,
             subscriber_keyexpr: parsed.subscriber.keyexpr,
             bridge: BridgeSpawnOptions {

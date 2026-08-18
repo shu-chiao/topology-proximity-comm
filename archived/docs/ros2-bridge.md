@@ -58,7 +58,7 @@ zenoh-bridge-ros2dds --no-multicast-scouting -c configs/zenoh_bridge-as-local-pe
 
 ## Run the bridge yourself
 
-From the repo root:
+From **`archived/`**:
 
 ```bash
 # Default: talk to the local agent
