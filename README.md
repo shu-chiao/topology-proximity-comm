@@ -2,7 +2,7 @@
 Topology and proximity aware communication architecture guide.
 
 ## 📰 Medium Article
-**A Gentle Guide to ROS 2 Communication Architectures: Trade-offs Between DDS & Zenoh**  
+**A Gentle Guide to ROS 2 Communication: Trade-offs Between DDS & Zenoh**  
 [![Read on Medium](https://img.shields.io/badge/Medium-Read%20Article-black?logo=medium)](https://medium.com/@stonebridgecfsu/a-gentle-guide-to-ros-2-communication-architectures-trade-offs-between-dds-zenoh-3eb53dc429e3)
 
 ## Table of Contents
